@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Information Management - Yuldoshev Behruz</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #000;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ffcc;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+        header p {
+            margin: 5px 0;
+            font-size: 1.2em;
+        }
+        nav {
+            background-color: #333;
+            padding: 10px;
+            text-align: center;
+        }
+        nav a {
+            color: #00ffcc;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 1.1em;
+        }
+        nav a:hover {
+            text-shadow: 0 0 5px #00ffcc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .upload-section {
+            background-color: #2b2b2b;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+        }
+        .upload-section input, .upload-section select, .upload-section button {
+            margin: 10px 0;
+            padding: 8px;
+            font-size: 1em;
+        }
+        .week {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);
+        }
+        .week h3 {
+            color: #00ffcc;
+            margin-top: 0;
+        }
+        .assignment-list a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            padding: 5px;
+        }
+        .assignment-list a:hover {
+            color: #00ffcc;
+        }
+        button {
+            background-color: #00ffcc;
+            border: none;
+            padding: 10px 20px;
+            color: #000;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #00e6b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Information Management</h1>
+        <p>Yuldoshev Behruz | IBM Department | ID: 2417724</p>
+    </header>
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#assignments">Assignments</a>
+    </nav>
+    <div class="container">
+        <div class="upload-section">
+            <h2>Upload Assignment</h2>
+            <select id="weekSelect">
+                ${Array.from({ length: 16 }, (_, i) => `<option value="week${i + 1}">Week ${i + 1}</option>`).join('')}
+            </select><br>
+            <input type="file" id="fileInput" multiple accept=".pdf,.html,.csv,.pptx,.txt"><br>
+            <input type="text" id="linkInput" placeholder="Or enter a link"><br>
+            <button onclick="uploadAssignment()">Upload</button>
+        </div>
+        <div id="assignments">
+            <h2>Assignments</h2>
+            ${Array.from({ length: 16 }, (_, i) => `
+                <div class="week">
+                    <h3>Week ${i + 1}</h3>
+                    <div class="assignment-list" id="week${i + 1}-list"></div>
+                </div>
+            `).join('')}
+        </div>
+    </div>
+
+    <script>
+        // Load assignments from localStorage on page load
+        window.onload = function () {
+            for (let i = 1; i <= 16; i++) {
+                loadAssignments(`week${i}`);
+            }
+        };
+
+        function uploadAssignment() {
+            const week = document.getElementById('weekSelect').value;
+            const fileInput = document.getElementById('fileInput');
+            const linkInput = document.getElementById('linkInput').value;
+            const list = document.getElementById(`${week}-list`);
+
+            // Handle file uploads
+            if (fileInput.files.length > 0) {
+                Array.from(fileInput.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const fileData = {
+                            name: file.name,
+                            content: e.target.result,
+                            type: file.type
+                        };
+                        saveAssignment(week, fileData);
+                        displayAssignment(week, fileData);
+                    };
+                    reader.readAsDataURL(file); // Convert file to base64 for storage
+                });
+            }
+
+            // Handle link uploads
+            if (linkInput) {
+                const linkData = { name: linkInput, content: linkInput, type: 'link' };
+                saveAssignment(week, linkData);
+                displayAssignment(week, linkData);
+                document.getElementById('linkInput').value = '';
+            }
+
+            fileInput.value = ''; // Clear file input
+        }
+
+        function saveAssignment(week, data) {
+            let assignments = JSON.parse(localStorage.getItem(week) || '[]');
+            assignments.push(data);
+            localStorage.setItem(week, JSON.stringify(assignments));
+        }
+
+        function loadAssignments(week) {
+            const assignments = JSON.parse(localStorage.getItem(week) || '[]');
+            assignments.forEach(data => displayAssignment(week, data));
+        }
+
+        function displayAssignment(week, data) {
+            const list = document.getElementById(`${week}-list`);
+            const a = document.createElement('a');
+            a.textContent = data.name;
+            a.href = '#';
+            a.onclick = (e) => {
+                e.preventDefault(); // Prevent default link behavior
+                viewAssignment(data);
+            };
+            list.appendChild(a);
+        }
+
+        function viewAssignment(data) {
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${data.name}</title>
+                    <style>
+                        body { margin: 0; background: #1a1a1a; }
+                        iframe { width: 100%; height: 100vh; border: none; }
+                    </style>
+                </head>
+                <body>
+                    ${data.type === 'link' 
+                        ? `<iframe src="${data.content}"></iframe>` 
+                        : `<iframe src="${data.content}"></iframe>`}
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+        }
+    </script>
+</body>
+</html>
